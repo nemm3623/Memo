@@ -11,14 +11,7 @@ public class MemoService {
     @Autowired
     private MemoRepository memoRepository;
 
-
     public Memo save(Memo memo) {
-
-        if (memo.getId() != null) {
-            if (memoRepository.existsById(memo.getId())) {
-                return null;
-            }
-        }
         return memoRepository.save(memo);
     }
 
@@ -30,9 +23,32 @@ public class MemoService {
         return memoRepository.findAll();
     }
 
-    public void delete(long id) {
+    public void delete(long id) throws IllegalStateException{
+        memoRepository.findById(id).orElseThrow(()
+                -> new IllegalStateException("Memo not found"));
+
         memoRepository.deleteById(id);
     }
 
+    public List<Memo> findByTitleOrByContent(String title, String content) {
+        boolean check_title = (title == null || title.trim().isEmpty());
+        boolean check_content = (content == null || content.trim().isEmpty());
 
+        if (check_title && check_content)
+            return memoRepository.findAll();
+        else if (check_title)
+            return findByContent(content);
+        else if (check_content)
+            return findByTitle(title);
+        else
+            return memoRepository.findByTitleContainingOrContentContaining(title,content);
+    }
+
+    public List<Memo> findByTitle(String title) {
+        return memoRepository.findByTitleContaining(title);
+    }
+
+    public List<Memo> findByContent(String content) {
+        return memoRepository.findByContentContaining(content);
+    }
 }
